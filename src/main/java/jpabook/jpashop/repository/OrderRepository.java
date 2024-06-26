@@ -12,6 +12,7 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+// Repository 계층은 가급적이면 API 스펙이 포함된 dto가 아닌 순수한 엔티티를 조회하는데 사용해야 한다.
 @Repository
 @RequiredArgsConstructor
 public class OrderRepository {
@@ -59,4 +60,38 @@ public class OrderRepository {
         TypedQuery<Order> query = em.createQuery(cq).setMaxResults(1000); //최대 1000 건
         return query.getResultList();
     }
+
+    public List<Order> findAllWithMemberDelivery() {
+        return em.createQuery(
+                "select o from Order o " +
+                        "join fetch o.member m " +
+                        "join fetch o.delivery d", Order.class
+        ).getResultList();
+    }
+
+    /*
+    * distinct의 기능
+    * 1. DB에 distinct 키워드를 보낸다.
+    * 2. 식별자를 보고 엔티티가 중복일 경우 중복을 걸러서 컬렉션에 담아 준다.
+    * */
+    public List<Order> findAllWithItem() {
+        return em.createQuery(
+                "select distinct o from Order o" +
+                        " join fetch o.member" +
+                        " join fetch o.delivery d" +
+                        " join fetch o.orderItems oi" +
+                        " join fetch oi.item i", Order.class)
+                .getResultList();
+    }
+
+    public List<Order> findAllWithMemberDelivery(int offset, int limit) {
+        return em.createQuery(
+                        "select o from Order o " +
+                                "join fetch o.member m " +
+                                "join fetch o.delivery d", Order.class)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+
 }
